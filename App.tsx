@@ -114,10 +114,10 @@ function RootStack() {
     <Stack.Navigator initialRouteName="Splash" screenOptions={screenOptions}>
       {screens.map((screen) => (
         <Stack.Screen
-          key={screen.name}
           name={screen.name}
           component={screen.component}
           options={screen.options}
+          key={screen.name}
         />
       ))}
     </Stack.Navigator>

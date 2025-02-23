@@ -1,7 +1,19 @@
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { useRef } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Animated,
+  Dimensions,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../theme";
 import type { ScreenProps } from "../../App";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 type Props = ScreenProps<"Dashboard">;
 
@@ -47,12 +59,47 @@ const dashboardOptions: DashboardOption[] = [
   {
     icon: "log-out",
     label: "Logout",
-    onPress: (navigation) => navigation.replace("Welcome"),
+    onPress: (navigation) => {
+      Alert.alert(
+        "Logout",
+        "Are you sure you want to logout?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Logout",
+            style: "destructive",
+            onPress: () => navigation.replace("Welcome"),
+          },
+        ],
+        { cancelable: true }
+      );
+    },
     color: theme.colors.accent,
   },
 ];
 
 export default function DashboardScreen({ navigation }: Props) {
+  const scaleValues = useRef(
+    dashboardOptions.map(() => new Animated.Value(1))
+  ).current;
+
+  const handlePressIn = (index: number) => {
+    Animated.spring(scaleValues[index], {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = (index: number) => {
+    Animated.spring(scaleValues[index], {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -71,25 +118,36 @@ export default function DashboardScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.optionsGrid}>
-          {dashboardOptions.map((option) => (
+          {dashboardOptions.map((option, index) => (
             <TouchableOpacity
               key={option.label}
-              style={styles.optionCard}
+              activeOpacity={1}
+              onPressIn={() => handlePressIn(index)}
+              onPressOut={() => handlePressOut(index)}
               onPress={() => option.onPress(navigation)}
             >
-              <Ionicons
-                name={option.icon}
-                size={32}
-                color={option.color || theme.colors.text}
-              />
-              <Text
+              <Animated.View
                 style={[
-                  styles.optionLabel,
-                  option.color && { color: option.color },
+                  styles.optionCard,
+                  {
+                    transform: [{ scale: scaleValues[index] }],
+                  },
                 ]}
               >
-                {option.label}
-              </Text>
+                <Ionicons
+                  name={option.icon}
+                  size={32}
+                  color={option.color || theme.colors.text}
+                />
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    option.color && { color: option.color },
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Animated.View>
             </TouchableOpacity>
           ))}
         </View>
@@ -122,7 +180,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: 16,
   },
   welcomeCard: {
     backgroundColor: theme.colors.secondary,
@@ -148,15 +206,15 @@ const styles = StyleSheet.create({
   optionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 16,
+    gap: 12,
+    paddingBottom: 20,
   },
   optionCard: {
-    width: "47%",
-    aspectRatio: 1,
+    width: (SCREEN_WIDTH - 32 - 12) / 2,
+    aspectRatio: 1.2,
     backgroundColor: theme.colors.secondary,
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: theme.colors.primary,
@@ -167,9 +225,11 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     marginTop: 12,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
     color: theme.colors.text,
     textAlign: "center",
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
 }); 
