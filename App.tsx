@@ -24,9 +24,15 @@ import PrivacySettingsScreen from "./screens/settings/PrivacySettingsScreen";
 import NotificationSettingsScreen from "./screens/settings/NotificationSettingsScreen";
 import SecuritySettingsScreen from "./screens/settings/SecuritySettingsScreen";
 import DataManagementScreen from "./screens/settings/DataManagementScreen";
+import SubscriptionPlansScreen from "./screens/subscription/SubscriptionPlansScreen";
+import PaymentProcessScreen from "./screens/subscription/PaymentProcessScreen";
+import PaymentConfirmationScreen from "./screens/subscription/PaymentConfirmationScreen";
+import TransactionHistoryScreen from "./screens/subscription/TransactionHistoryScreen";
+import ManageSubscriptionScreen from "./screens/subscription/ManageSubscriptionScreen";
 import { theme } from "./theme";
 import type { PropsWithChildren, ComponentType, ReactNode } from "react";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -43,6 +49,20 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   SecuritySettings: undefined;
   DataManagement: undefined;
+  SubscriptionPlans: undefined;
+  PaymentProcess: {
+    plan: {
+      id: string;
+      name: string;
+      price: {
+        monthly: number;
+        annual: number;
+      };
+    };
+  };
+  PaymentConfirmation: undefined;
+  TransactionHistory: undefined;
+  ManageSubscription: undefined;
 };
 
 export type ScreenProps<T extends keyof RootStackParamList> =
@@ -138,6 +158,26 @@ const screens: Screen[] = [
     name: "DataManagement",
     component: DataManagementScreen,
   },
+  {
+    name: "SubscriptionPlans",
+    component: SubscriptionPlansScreen,
+  },
+  {
+    name: "PaymentProcess",
+    component: PaymentProcessScreen,
+  },
+  {
+    name: "PaymentConfirmation",
+    component: PaymentConfirmationScreen,
+  },
+  {
+    name: "TransactionHistory",
+    component: TransactionHistoryScreen,
+  },
+  {
+    name: "ManageSubscription",
+    component: ManageSubscriptionScreen,
+  },
 ];
 
 function RootStack() {
@@ -145,10 +185,10 @@ function RootStack() {
     <Stack.Navigator initialRouteName="Splash" screenOptions={screenOptions}>
       {screens.map((screen) => (
         <Stack.Screen
-          key={screen.name}
           name={screen.name}
           component={screen.component}
           options={screen.options}
+          key={screen.name}
         />
       ))}
     </Stack.Navigator>
@@ -180,7 +220,9 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <SettingsProvider>
-        <Navigation />
+        <SubscriptionProvider>
+          <Navigation />
+        </SubscriptionProvider>
       </SettingsProvider>
     </View>
   );
