@@ -2,11 +2,11 @@ import {
   NavigationContainer,
   DarkTheme,
   Theme,
-  DefaultTheme,
 } from "@react-navigation/native";
 import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
+  NativeStackScreenProps,
 } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
@@ -17,7 +17,7 @@ import SignUpScreen from "./screens/auth/SignUpScreen";
 import DashboardScreen from "./screens/dashboard/DashboardScreen";
 import ForgotPasswordScreen from "./screens/auth/ForgotPasswordScreen";
 import { theme } from "./theme";
-import type { ReactNode } from "react";
+import type { PropsWithChildren, ComponentType } from "react";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -27,6 +27,9 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   Dashboard: undefined;
 };
+
+export type ScreenProps<T extends keyof RootStackParamList> =
+  NativeStackScreenProps<RootStackParamList, T>;
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -52,7 +55,7 @@ const screenOptions: NativeStackNavigationOptions = {
 
 type Screen = {
   name: keyof RootStackParamList;
-  component: React.ComponentType<any>;
+  component: ComponentType<any>;
   options?: NativeStackNavigationOptions;
 };
 
@@ -62,7 +65,7 @@ const screens: Screen[] = [
     component: SplashScreen,
     options: {
       gestureEnabled: false,
-      animationTypeForReplace: "pop" as const,
+      animationTypeForReplace: "pop",
     },
   },
   {
@@ -87,7 +90,7 @@ const screens: Screen[] = [
   },
 ];
 
-function RootStack(): ReactNode {
+function RootStack() {
   return (
     <Stack.Navigator
       initialRouteName="Splash"
@@ -105,11 +108,19 @@ function RootStack(): ReactNode {
   );
 }
 
-function Navigation(): ReactNode {
+function NavigationProvider({ children }: PropsWithChildren) {
   return (
     <NavigationContainer theme={navigationTheme}>
-      <RootStack />
+      {children}
     </NavigationContainer>
+  );
+}
+
+function Navigation() {
+  return (
+    <NavigationProvider>
+      <RootStack />
+    </NavigationProvider>
   );
 }
 

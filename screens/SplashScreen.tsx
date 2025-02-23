@@ -1,10 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { StyleSheet, Text, View, Animated } from "react-native";
 import { theme } from "../theme";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../App";
+import type { ScreenProps } from "../App";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Splash">;
+type Props = ScreenProps<"Splash">;
 
 export default function SplashScreen({ navigation }: Props) {
   const logoScale = new Animated.Value(0.5);
@@ -79,4 +78,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
   },
-}); 
+});

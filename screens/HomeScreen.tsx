@@ -6,10 +6,9 @@ import {
   Animated,
 } from "react-native";
 import { theme } from "../theme";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../App";
+import type { ScreenProps } from "../App";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Welcome">;
+type Props = ScreenProps<"Welcome">;
 
 export default function HomeScreen({ navigation }: Props) {
   const handlePress = (buttonScale: Animated.Value) => {
