@@ -20,7 +20,7 @@ import ProfileScreen from "./screens/profile/ProfileScreen";
 import EditProfileScreen from "./screens/profile/EditProfileScreen";
 import SettingsScreen from "./screens/profile/SettingsScreen";
 import { theme } from "./theme";
-import type { PropsWithChildren, ComponentType } from "react";
+import type { PropsWithChildren, ComponentType, ReactNode } from "react";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -124,7 +124,9 @@ function RootStack() {
   );
 }
 
-type NavigationProviderProps = PropsWithChildren;
+type NavigationProviderProps = {
+  children: ReactNode;
+};
 
 function NavigationProvider({ children }: NavigationProviderProps) {
   return (
