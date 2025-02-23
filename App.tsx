@@ -29,6 +29,10 @@ import PaymentProcessScreen from "./screens/subscription/PaymentProcessScreen";
 import PaymentConfirmationScreen from "./screens/subscription/PaymentConfirmationScreen";
 import TransactionHistoryScreen from "./screens/subscription/TransactionHistoryScreen";
 import ManageSubscriptionScreen from "./screens/subscription/ManageSubscriptionScreen";
+import WelcomeScreen from "./screens/auth/WelcomeScreen";
+import UsageStatsScreen from "./screens/dashboard/UsageStatsScreen";
+import ActivityHistoryScreen from "./screens/dashboard/ActivityHistoryScreen";
+import PaymentMethodsScreen from "./screens/dashboard/PaymentMethodsScreen";
 import { theme } from "./theme";
 import type { PropsWithChildren, ComponentType, ReactNode } from "react";
 import { SettingsProvider } from "./contexts/SettingsContext";
@@ -63,6 +67,9 @@ export type RootStackParamList = {
   PaymentConfirmation: undefined;
   TransactionHistory: undefined;
   ManageSubscription: undefined;
+  UsageStats: undefined;
+  ActivityHistory: undefined;
+  PaymentMethods: undefined;
 };
 
 export type ScreenProps<T extends keyof RootStackParamList> =
@@ -108,7 +115,7 @@ const screens: Screen[] = [
   },
   {
     name: "Welcome",
-    component: HomeScreen,
+    component: WelcomeScreen,
   },
   {
     name: "Login",
@@ -177,6 +184,18 @@ const screens: Screen[] = [
   {
     name: "ManageSubscription",
     component: ManageSubscriptionScreen,
+  },
+  {
+    name: "UsageStats",
+    component: UsageStatsScreen,
+  },
+  {
+    name: "ActivityHistory",
+    component: ActivityHistoryScreen,
+  },
+  {
+    name: "PaymentMethods",
+    component: PaymentMethodsScreen,
   },
 ];
 

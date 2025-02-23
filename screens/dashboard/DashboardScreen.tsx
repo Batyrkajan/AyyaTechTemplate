@@ -33,30 +33,30 @@ type Props = ScreenProps<"Dashboard">;
 type DashboardOption = {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  onPress: (navigation: Props["navigation"]) => void;
+  onPress: (nav: Props["navigation"]) => void;
   color?: string;
 };
 
-const dashboardOptions: DashboardOption[] = [
+const getDashboardOptions = (nav: Props["navigation"]): DashboardOption[] => [
   {
     icon: "person-circle",
     label: "Profile",
-    onPress: (navigation) => navigation.navigate("Profile"),
+    onPress: (nav) => nav.navigate("Profile"),
   },
   {
     icon: "settings-outline",
     label: "Settings",
-    onPress: (navigation) => navigation.navigate("GeneralSettings"),
+    onPress: (nav) => nav.navigate("GeneralSettings"),
   },
   {
     icon: "notifications-outline",
     label: "Notifications",
-    onPress: (navigation) => navigation.navigate("NotificationSettings"),
+    onPress: (nav) => nav.navigate("NotificationSettings"),
   },
   {
     icon: "shield-outline",
     label: "Privacy & Security",
-    onPress: (navigation) => navigation.navigate("PrivacySettings"),
+    onPress: (nav) => nav.navigate("PrivacySettings"),
   },
   {
     icon: "help-circle-outline",
@@ -75,7 +75,7 @@ const dashboardOptions: DashboardOption[] = [
   {
     icon: "log-out",
     label: "Logout",
-    onPress: (navigation) => {
+    onPress: (nav) => {
       Alert.alert(
         "Logout",
         "Are you sure you want to logout?",
@@ -87,7 +87,7 @@ const dashboardOptions: DashboardOption[] = [
           {
             text: "Logout",
             style: "destructive",
-            onPress: () => navigation.replace("Welcome"),
+            onPress: () => nav.replace("Welcome"),
           },
         ],
         { cancelable: true }
@@ -155,20 +155,20 @@ type UsageBreakdown = {
   icon: keyof typeof Ionicons.glyphMap;
 };
 
-// Add new mock data
-const quickActions: QuickAction[] = [
+// Update quick actions
+const getQuickActions = (nav: Props["navigation"]): QuickAction[] => [
   {
     id: "upgrade",
     icon: "trending-up",
     label: "Upgrade Plan",
-    onPress: () => navigation.navigate("SubscriptionPlans"),
+    onPress: () => nav.navigate("SubscriptionPlans"),
     color: theme.colors.primary,
   },
   {
     id: "payment",
     icon: "card",
     label: "Payment Methods",
-    onPress: () => navigation.navigate("PaymentMethods"),
+    onPress: () => nav.navigate("PaymentMethods"),
     color: "#4CAF50",
   },
   {
@@ -223,16 +223,26 @@ type WidgetTheme = {
   };
 };
 
-type WidgetLayout = "compact" | "normal" | "expanded";
+type WidgetLayout = 'compact' | 'normal' | 'expanded';
+
+type WidgetCustomization = {
+  id: string;
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  description: string;
+  layouts?: WidgetLayout[];
+  refreshIntervals?: number[];
+  theme?: string;
+};
 
 type WidgetConfig = {
   id: string;
   visible: boolean;
   order: number;
+  theme: string;
+  layout: WidgetLayout;
+  refreshInterval: number;
   expanded?: boolean;
-  theme?: string;
-  layout?: WidgetLayout;
-  refreshInterval?: number; // in minutes
 };
 
 // Add themes
@@ -318,10 +328,9 @@ const widgetOptions: WidgetCustomization[] = [
     id: "usage",
     title: "Usage Statistics",
     icon: "stats-chart",
-    description: "Show your usage trends and limits",
+    description: "Monitor your usage patterns and trends",
     layouts: ["compact", "normal", "expanded"],
-    supportedThemes: ["default", "dark", "light"],
-    refreshIntervals: [5, 15, 30, 60], // minutes
+    refreshIntervals: [5, 15, 30, 60],
   },
   {
     id: "activity",
@@ -515,7 +524,7 @@ export default function DashboardScreen({ navigation }: Props) {
 
   // Add dashboard menu animations
   const menuAnimations = useRef(
-    dashboardOptions.map(() => ({
+    getDashboardOptions(navigation).map(() => ({
       scale: new Animated.Value(1),
       slide: new Animated.Value(100),
       opacity: new Animated.Value(0),
@@ -543,6 +552,9 @@ export default function DashboardScreen({ navigation }: Props) {
   const [customThemes, setCustomThemes] = useState<CustomTheme[]>([]);
   const [isEditingTheme, setIsEditingTheme] = useState(false);
   const [editingTheme, setEditingTheme] = useState<CustomTheme | null>(null);
+
+  // Get quick actions with navigation
+  const quickActions = getQuickActions(navigation);
 
   // Load sounds
   useEffect(() => {
@@ -956,42 +968,21 @@ export default function DashboardScreen({ navigation }: Props) {
   );
 
   const renderQuickActionsWidget = () => (
-    <Animated.View
-      style={[
-        styles.widget,
-        {
-          opacity: quickActionsAnim,
-          transform: [
-            {
-              translateY: quickActionsAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [50, 0],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
-      <Text style={styles.widgetTitle}>Quick Actions</Text>
+    <Animated.View style={[styles.widget, styles.quickActionsWidget]}>
+      <View style={styles.widgetHeader}>
+        <Text style={styles.widgetTitle}>Quick Actions</Text>
+      </View>
       <View style={styles.quickActionsGrid}>
         {quickActions.map((action) => (
           <TouchableOpacity
             key={action.id}
-            style={styles.quickActionButton}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              action.onPress();
-            }}
+            style={styles.quickAction}
+            onPress={action.onPress}
           >
-            <View
-              style={[
-                styles.quickActionIcon,
-                { backgroundColor: action.color + "20" },
-              ]}
-            >
-              <Ionicons name={action.icon} size={24} color={action.color} />
-            </View>
-            <Text style={styles.quickActionLabel}>{action.label}</Text>
+            <Ionicons name={action.icon} size={24} color={action.color} />
+            <Text style={[styles.quickActionText, { color: action.color }]}>
+              {action.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -1654,7 +1645,7 @@ export default function DashboardScreen({ navigation }: Props) {
         })}
 
       <View style={styles.menuContainer}>
-        {dashboardOptions.map((option, index) => (
+        {getDashboardOptions(navigation).map((option, index) => (
           <Animated.View
             key={option.label}
             style={[
@@ -1926,20 +1917,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 16,
   },
-  quickActionButton: {
+  quickAction: {
     width: "48%",
     alignItems: "center",
     marginBottom: 16,
   },
-  quickActionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  quickActionLabel: {
+  quickActionText: {
     fontSize: 14,
     color: theme.colors.text,
     textAlign: "center",
@@ -2254,5 +2237,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: theme.colors.background,
+  },
+  quickActionsWidget: {
+    marginTop: 20,
   },
 });

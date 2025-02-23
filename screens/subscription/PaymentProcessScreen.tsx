@@ -59,160 +59,54 @@ const paymentMethods: PaymentMethodConfig[] = [
   },
 ];
 
+// Add validation types
 type ValidationError = {
-  field: string;
+  field: keyof CardDetails;
   message: string;
 };
 
-type PaymentValidation = {
-  validate: () => ValidationError | null;
-  format?: (value: string) => string;
+type ValidationResult = ValidationError | null;
+
+// Add validation functions
+const validateCardNumber = (number: string): ValidationResult => {
+  const cleaned = number.replace(/\s/g, "");
+  if (!cleaned) {
+    return { field: "number", message: "Card number is required" };
+  }
+  if (!/^\d{16}$/.test(cleaned)) {
+    return { field: "number", message: "Please enter a valid 16-digit card number" };
+  }
+  return null;
 };
 
-const paymentValidations: Record<PaymentMethod, PaymentValidation[]> = {
-  card: [
-    {
-      validate: () => {
-        if (!cardDetails.name.trim()) {
-          return {
-            field: "name",
-            message: "Please enter cardholder name",
-          };
-        }
-        if (!/^[a-zA-Z\s]{2,}$/.test(cardDetails.name.trim())) {
-          return {
-            field: "name",
-            message: "Please enter a valid name",
-          };
-        }
-        return null;
-      },
-    },
-    {
-      validate: () => {
-        const number = cardDetails.number.replace(/\s/g, "");
-        if (!number) {
-          return {
-            field: "number",
-            message: "Please enter card number",
-          };
-        }
-        if (!/^\d{16}$/.test(number)) {
-          return {
-            field: "number",
-            message: "Please enter a valid 16-digit card number",
-          };
-        }
-        // Luhn algorithm for card number validation
-        let sum = 0;
-        let isEven = false;
-        for (let i = number.length - 1; i >= 0; i--) {
-          let digit = parseInt(number[i]);
-          if (isEven) {
-            digit *= 2;
-            if (digit > 9) {
-              digit -= 9;
-            }
-          }
-          sum += digit;
-          isEven = !isEven;
-        }
-        if (sum % 10 !== 0) {
-          return {
-            field: "number",
-            message: "Please enter a valid card number",
-          };
-        }
-        return null;
-      },
-      format: (value: string) => {
-        const cleaned = value.replace(/\s/g, "");
-        const groups = cleaned.match(/.{1,4}/g);
-        return groups ? groups.join(" ") : cleaned;
-      },
-    },
-    {
-      validate: () => {
-        if (!cardDetails.expiry) {
-          return {
-            field: "expiry",
-            message: "Please enter expiry date",
-          };
-        }
-        const [month, year] = cardDetails.expiry.split("/");
-        const expiry = new Date(2000 + parseInt(year), parseInt(month) - 1);
-        const now = new Date();
-        if (expiry < now) {
-          return {
-            field: "expiry",
-            message: "Card has expired",
-          };
-        }
-        if (!cardDetails.expiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) {
-          return {
-            field: "expiry",
-            message: "Please enter a valid expiry date (MM/YY)",
-          };
-        }
-        return null;
-      },
-      format: (value: string) => {
-        const cleaned = value.replace(/\D/g, "");
-        if (cleaned.length >= 2) {
-          return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
-        }
-        return cleaned;
-      },
-    },
-    {
-      validate: () => {
-        if (!cardDetails.cvv) {
-          return {
-            field: "cvv",
-            message: "Please enter CVV",
-          };
-        }
-        if (!cardDetails.cvv.match(/^\d{3}$/)) {
-          return {
-            field: "cvv",
-            message: "Please enter a valid 3-digit CVV",
-          };
-        }
-        return null;
-      },
-    },
-  ],
-  paypal: [
-    {
-      validate: () => {
-        // PayPal validation would be handled by PayPal SDK
-        return null;
-      },
-    },
-  ],
-  googlepay: [
-    {
-      validate: () => {
-        // Google Pay validation would be handled by Google Pay SDK
-        return null;
-      },
-    },
-  ],
-  applepay: [
-    {
-      validate: () => {
-        // Apple Pay validation would be handled by Apple Pay SDK
-        return null;
-      },
-    },
-  ],
+const validateExpiry = (expiry: string): ValidationResult => {
+  if (!expiry) {
+    return { field: "expiry", message: "Expiry date is required" };
+  }
+  if (!expiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) {
+    return { field: "expiry", message: "Please enter a valid expiry date (MM/YY)" };
+  }
+  const [month, year] = expiry.split("/");
+  const expiryDate = new Date(2000 + parseInt(year), parseInt(month) - 1);
+  if (expiryDate < new Date()) {
+    return { field: "expiry", message: "Card has expired" };
+  }
+  return null;
+};
+
+// Add card details type
+type CardDetails = {
+  name: string;
+  number: string;
+  expiry: string;
+  cvv: string;
 };
 
 export default function PaymentProcessScreen({ navigation, route }: Props) {
   const { plan } = route.params;
   const { subscription, addPaymentMethod } = useSubscription();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
-  const [cardDetails, setCardDetails] = useState({
+  const [cardDetails, setCardDetails] = useState<CardDetails>({
     name: "",
     number: "",
     expiry: "",
