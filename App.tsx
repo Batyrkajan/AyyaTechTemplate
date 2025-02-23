@@ -16,6 +16,9 @@ import LoginScreen from "./screens/auth/LoginScreen";
 import SignUpScreen from "./screens/auth/SignUpScreen";
 import DashboardScreen from "./screens/dashboard/DashboardScreen";
 import ForgotPasswordScreen from "./screens/auth/ForgotPasswordScreen";
+import ProfileScreen from "./screens/profile/ProfileScreen";
+import EditProfileScreen from "./screens/profile/EditProfileScreen";
+import SettingsScreen from "./screens/profile/SettingsScreen";
 import { theme } from "./theme";
 import type { PropsWithChildren, ComponentType } from "react";
 
@@ -26,6 +29,9 @@ export type RootStackParamList = {
   SignUp: undefined;
   ForgotPassword: undefined;
   Dashboard: undefined;
+  Profile: undefined;
+  EditProfile: undefined;
+  Settings: undefined;
 };
 
 export type ScreenProps<T extends keyof RootStackParamList> =
@@ -88,6 +94,18 @@ const screens: Screen[] = [
     name: "Dashboard",
     component: DashboardScreen,
   },
+  {
+    name: "Profile",
+    component: ProfileScreen,
+  },
+  {
+    name: "EditProfile",
+    component: EditProfileScreen,
+  },
+  {
+    name: "Settings",
+    component: SettingsScreen,
+  },
 ];
 
 function RootStack() {
@@ -108,7 +126,9 @@ function RootStack() {
   );
 }
 
-function NavigationProvider({ children }: PropsWithChildren) {
+type NavigationProviderProps = PropsWithChildren;
+
+function NavigationProvider({ children }: NavigationProviderProps) {
   return (
     <NavigationContainer theme={navigationTheme}>
       {children}
