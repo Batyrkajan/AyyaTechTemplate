@@ -155,7 +155,9 @@ function RootStack() {
   );
 }
 
-type NavigationProviderProps = PropsWithChildren;
+type NavigationProviderProps = {
+  children: ReactNode;
+};
 
 function NavigationProvider({ children }: NavigationProviderProps) {
   return (

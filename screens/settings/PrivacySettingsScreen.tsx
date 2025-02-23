@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../theme";
 import type { ScreenProps } from "../../App";
+import { useSettings } from "../../contexts/SettingsContext";
 
 type Props = ScreenProps<"PrivacySettings">;
 
@@ -22,6 +23,11 @@ type Permission = {
 };
 
 export default function PrivacySettingsScreen({ navigation }: Props) {
+  const {
+    privacy: { dataSharing, analytics },
+    setPrivacy,
+  } = useSettings();
+
   const [permissions, setPermissions] = useState<Permission[]>([
     {
       id: "camera",
@@ -42,11 +48,6 @@ export default function PrivacySettingsScreen({ navigation }: Props) {
       enabled: true,
     },
   ]);
-
-  const [dataSharing, setDataSharing] = useState({
-    analytics: true,
-    thirdParty: false,
-  });
 
   const handlePermissionToggle = (id: string) => {
     setPermissions((prev) =>
@@ -122,10 +123,8 @@ export default function PrivacySettingsScreen({ navigation }: Props) {
               </Text>
             </View>
             <Switch
-              value={dataSharing.analytics}
-              onValueChange={(value) =>
-                setDataSharing({ ...dataSharing, analytics: value })
-              }
+              value={analytics}
+              onValueChange={(value) => setPrivacy({ analytics: value })}
               trackColor={{
                 false: theme.colors.secondary,
                 true: theme.colors.primary,
@@ -141,10 +140,8 @@ export default function PrivacySettingsScreen({ navigation }: Props) {
               </Text>
             </View>
             <Switch
-              value={dataSharing.thirdParty}
-              onValueChange={(value) =>
-                setDataSharing({ ...dataSharing, thirdParty: value })
-              }
+              value={dataSharing}
+              onValueChange={(value) => setPrivacy({ dataSharing: value })}
               trackColor={{
                 false: theme.colors.secondary,
                 true: theme.colors.primary,

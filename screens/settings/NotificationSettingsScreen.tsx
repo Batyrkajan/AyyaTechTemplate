@@ -10,6 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../theme";
 import type { ScreenProps } from "../../App";
+import { useSettings } from "../../contexts/SettingsContext";
 
 type Props = ScreenProps<"NotificationSettings">;
 
@@ -22,50 +23,61 @@ type NotificationSetting = {
 };
 
 export default function NotificationSettingsScreen({ navigation }: Props) {
+  const {
+    notifications: { push, email, sound },
+    setNotifications,
+  } = useSettings();
+
   const [settings, setSettings] = useState<NotificationSetting[]>([
     {
       id: "app_updates",
       title: "App Updates",
       description: "Get notified about new features and improvements",
-      enabled: true,
+      enabled: push,
       type: "push",
     },
     {
       id: "messages",
       title: "Messages",
       description: "Receive real-time chat notifications",
-      enabled: true,
+      enabled: push,
       type: "push",
     },
     {
       id: "reminders",
       title: "Reminders",
       description: "Get notified about tasks and events",
-      enabled: true,
+      enabled: push,
       type: "push",
     },
     {
       id: "email_updates",
       title: "Email Updates",
       description: "Receive important updates via email",
-      enabled: false,
+      enabled: email,
       type: "email",
     },
     {
       id: "email_newsletter",
       title: "Newsletter",
       description: "Stay updated with our monthly newsletter",
-      enabled: false,
+      enabled: email,
       type: "email",
     },
   ]);
 
-  const [soundEnabled, setSoundEnabled] = useState(true);
-
   const handleToggle = (id: string) => {
-    setSettings((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
-    );
+    const setting = settings.find((s) => s.id === id);
+    if (setting) {
+      if (setting.type === "push") {
+        setNotifications({ push: !setting.enabled });
+      } else if (setting.type === "email") {
+        setNotifications({ email: !setting.enabled });
+      }
+      setSettings((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+      );
+    }
   };
 
   return (
@@ -141,8 +153,8 @@ export default function NotificationSettingsScreen({ navigation }: Props) {
               </Text>
             </View>
             <Switch
-              value={soundEnabled}
-              onValueChange={setSoundEnabled}
+              value={sound}
+              onValueChange={(value) => setNotifications({ sound: value })}
               trackColor={{
                 false: theme.colors.secondary,
                 true: theme.colors.primary,
