@@ -32,7 +32,7 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to Ayya</Text>
-      <Text style={styles.subtitle}>Your Gateway to Innovation</Text>
+      <Text style={styles.subtitle}>Your Gateway to Future</Text>
 
       <View style={styles.buttonContainer}>
         <Animated.View

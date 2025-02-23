@@ -19,8 +19,14 @@ import ForgotPasswordScreen from "./screens/auth/ForgotPasswordScreen";
 import ProfileScreen from "./screens/profile/ProfileScreen";
 import EditProfileScreen from "./screens/profile/EditProfileScreen";
 import SettingsScreen from "./screens/profile/SettingsScreen";
+import GeneralSettingsScreen from "./screens/settings/GeneralSettingsScreen";
+import PrivacySettingsScreen from "./screens/settings/PrivacySettingsScreen";
+import NotificationSettingsScreen from "./screens/settings/NotificationSettingsScreen";
+import SecuritySettingsScreen from "./screens/settings/SecuritySettingsScreen";
+import DataManagementScreen from "./screens/settings/DataManagementScreen";
 import { theme } from "./theme";
 import type { PropsWithChildren, ComponentType, ReactNode } from "react";
+import { SettingsProvider } from "./contexts/SettingsContext";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -32,6 +38,11 @@ export type RootStackParamList = {
   Profile: undefined;
   EditProfile: undefined;
   Settings: undefined;
+  GeneralSettings: undefined;
+  PrivacySettings: undefined;
+  NotificationSettings: undefined;
+  SecuritySettings: undefined;
+  DataManagement: undefined;
 };
 
 export type ScreenProps<T extends keyof RootStackParamList> =
@@ -107,6 +118,26 @@ const screens: Screen[] = [
     name: "Settings",
     component: SettingsScreen,
   },
+  {
+    name: "GeneralSettings",
+    component: GeneralSettingsScreen,
+  },
+  {
+    name: "PrivacySettings",
+    component: PrivacySettingsScreen,
+  },
+  {
+    name: "NotificationSettings",
+    component: NotificationSettingsScreen,
+  },
+  {
+    name: "SecuritySettings",
+    component: SecuritySettingsScreen,
+  },
+  {
+    name: "DataManagement",
+    component: DataManagementScreen,
+  },
 ];
 
 function RootStack() {
@@ -114,19 +145,17 @@ function RootStack() {
     <Stack.Navigator initialRouteName="Splash" screenOptions={screenOptions}>
       {screens.map((screen) => (
         <Stack.Screen
+          key={screen.name}
           name={screen.name}
           component={screen.component}
           options={screen.options}
-          key={screen.name}
         />
       ))}
     </Stack.Navigator>
   );
 }
 
-type NavigationProviderProps = {
-  children: ReactNode;
-};
+type NavigationProviderProps = PropsWithChildren;
 
 function NavigationProvider({ children }: NavigationProviderProps) {
   return (
@@ -148,7 +177,9 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <Navigation />
+      <SettingsProvider>
+        <Navigation />
+      </SettingsProvider>
     </View>
   );
 }

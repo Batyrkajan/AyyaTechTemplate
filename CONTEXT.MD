@@ -1,115 +1,142 @@
-👤 User Profile Management Pages Guide for Ayya Technologies
+⚙️ Settings and Preferences Pages Guide for Ayya Technologies
 Objective:
-Develop a sleek, intuitive user profile system that reflects Ayya Technologies' modern, bold, and futuristic identity. The system should allow users to view, edit, and manage their personal information effortlessly, with a premium feel that resonates with Ayya’s cutting-edge aesthetic.
+Design a comprehensive settings and preferences system that reflects Ayya Technologies' modern, bold, and futuristic brand identity. The system should empower users to personalize their app experience, manage account preferences, and ensure privacy and security—while maintaining an intuitive and visually striking interface.
 
-📌 1. Profile Overview Page
+📌 1. General Settings Page
 Purpose:
-Display the user's essential information in a visually appealing layout that feels high-tech and premium.
+Allow users to manage core application settings related to usability, appearance, and general preferences.
 
 Design Requirements:
 
-Background: Dark-themed interface with subtle electric blue accents around the profile card.
-User Profile Card:
-Circular profile picture in the center with a glowing blue ring around it.
-Display the user’s full name prominently in bold white text.
-Display secondary info below in smaller gray text:
-Email Address
-Account Creation Date
-Quick Actions Section:
-Edit Profile button – Electric blue background with bold white text.
-Settings icon – Located in the top right corner of the card for quick access.
-Logout button – Discreetly placed at the bottom, white text with a gray background.
-Activity Summary Widget:
-Display recent activities, such as last login time, profile updates, or subscription status.
-User Flow:
-
-User opens their profile from the navigation menu.
-Views personal information and recent activity.
-Can proceed to Edit Profile or Settings from this screen.
-📌 2. Edit Profile Page
-Purpose:
-Allow users to update their personal information securely and intuitively.
-
-Design Requirements:
-
-Background: Consistent dark theme with glowing accents on focused input fields.
+Background: Dark-themed foundation with subtle electric blue highlights around section dividers and buttons.
 Title:
-"Edit Profile" – Displayed boldly in white at the top.
-Editable Fields:
-Full Name – Text input with placeholder: "Enter your full name"
-Email Address – Text input with placeholder: "Enter your email address"
-Phone Number – Numeric input with country code selector.
-Bio – Multi-line input field for a short description.
-Profile Picture Upload:
-Option to upload a new photo from device storage or camera.
-Image preview with crop/resize functionality.
-CTA Button:
-"Save Changes" – Electric blue button with bold white text and a subtle hover glow effect.
-Cancel Option:
-"Discard Changes" – Small text button in gray that redirects back to the Profile Overview.
-User Flow:
-
-User edits their personal information.
-Clicks "Save Changes" to update.
-A success message appears: "Profile updated successfully!"
-Redirects back to the Profile Overview Page.
-📌 3. Settings Page
-Purpose:
-Enable users to customize their experience and manage app settings seamlessly.
-
-Design Requirements:
-
-Background: Dark theme with soft neon highlights around toggles and buttons.
-Title:
-"Settings" – Large, bold white text at the top of the page.
+"General Settings" – Displayed in bold, white, futuristic font at the top of the screen.
 Sections:
-Account Settings:
-Change Email
-Update Password
-Two-Factor Authentication toggle
-Preferences:
-Dark Mode Toggle (enabled by default)
-Language Selector (dropdown list with international options)
-Privacy Controls:
-Manage Data Sharing (toggle switches)
-Download Account Data
-Delete Account (with confirmation dialog)
-Notifications:
-Toggle for push notifications
-Email notification preferences
-CTA Buttons:
+Language Preferences:
+Dropdown list with supported languages (default to English).
+A glowing highlight around the selected language.
+Theme Settings:
+Toggle switch for Dark Mode (enabled by default).
+Additional theme customization options for neon accents (electric blue, purple, green).
+Time Zone Settings:
+Dropdown with global time zone options.
+App Update Preferences:
+Toggle for enabling/disabling automatic updates.
+Visual Elements:
 
-Save Preferences – Electric blue button for saving any changes.
-Cancel – Gray text for discarding changes and returning to the previous screen.
+Clear section dividers with subtle neon glows.
+Toggles and dropdowns should have hover effects (glowing outlines).
 User Flow:
 
-User navigates to Settings from the profile or main menu.
-Makes desired changes across different sections.
-Clicks "Save Preferences" to apply updates.
-Confirmation message appears: "Settings updated successfully."
-📌 4. Profile Completion Progress Tracker (Optional Feature)
+User navigates to General Settings from the Settings menu.
+Selects or adjusts preferences.
+Clicks the "Save Changes" button (electric blue, bold white text).
+Confirmation message appears: "Preferences updated successfully."
+📌 2. Privacy Settings Page
 Purpose:
-Encourage users to complete their profiles by providing visual progress feedback.
+Enable users to manage their privacy and data-sharing preferences securely and transparently.
 
 Design Requirements:
 
-Visual Element:
-A circular progress bar around the profile picture.
-Display percentage of completion in the center (e.g., "70% Complete").
-Checklist:
-Upload Profile Picture
-Add Bio
-Verify Email
-Complete Basic Information
+Background: Same dark aesthetic with vibrant neon accents highlighting sensitive areas.
+Title:
+"Privacy Settings" – Displayed boldly in white text.
+Sections:
+Data Sharing Controls:
+Toggle switches for allowing/disabling data sharing with third-party services.
+App Permissions:
+Display a list of app permissions (Camera, Microphone, Location).
+Toggle switches for enabling/disabling access.
+Download Data:
+Button: "Download My Data" – Allows users to export their personal data (in JSON or CSV format).
+Delete Account:
+Prominently displayed red button: "Delete My Account"
+Clicking initiates a confirmation dialog that asks:
+"Are you sure? This action is irreversible."
 User Flow:
 
-Users see their completion percentage on the Profile Overview Page.
-Clicking on the tracker leads to steps for profile completion.
-Completing each step updates the percentage dynamically.
-🔐 Security and Functionality Requirements for User Profile Management
-Data Validation: Ensure all inputs are validated (e.g., valid email format, phone number).
-Secure Data Handling: Use encryption for sensitive data like phone numbers and email addresses.
-File Upload Security: Validate and compress profile picture uploads for efficiency and security.
-Privacy Compliance: Allow users to control their data according to GDPR or relevant data protection laws.
-Error Feedback: Clearly communicate errors (e.g., "Invalid phone number format").
-Accessibility: Ensure all actions are screen-reader friendly and have proper color contrast.
+User adjusts privacy settings using toggles.
+If "Delete My Account" is selected, a confirmation prompt appears.
+Confirmation leads to account deletion, with a success message and app exit.
+📌 3. Notification Preferences Page
+Purpose:
+Allow users to manage how and when they receive notifications.
+
+Design Requirements:
+
+Background: Consistent dark theme with minimalistic notification icons.
+Title:
+"Notification Preferences" – Displayed in white, centered at the top.
+Sections:
+Push Notifications:
+Toggle for enabling/disabling general push notifications.
+Customizable options for:
+App Updates – Notifications about new features.
+Messages – Real-time chat alerts.
+Reminders – Task and event reminders.
+Email Notifications:
+Toggle for receiving email updates.
+Custom options for newsletters, promotions, and security alerts.
+Sound Preferences:
+Toggle sound for notifications on/off.
+Dropdown to select preferred notification sound.
+User Flow:
+
+User enters the Notification Preferences section.
+Adjusts toggles and dropdowns based on their preferences.
+Clicks "Save Preferences" to apply changes.
+Confirmation message appears: "Notification settings updated successfully."
+📌 4. Account Security Settings Page
+Purpose:
+Offer users complete control over their account security to enhance trust and protection.
+
+Design Requirements:
+
+Background: Dark theme with sharp electric blue outlines for sensitive security features.
+Title:
+"Account Security" – Displayed prominently in bold white text.
+Sections:
+Change Password:
+Current password input field.
+New password field (with strength indicator).
+Confirm new password field.
+Electric blue "Update Password" button.
+Two-Factor Authentication (2FA):
+Toggle to enable/disable 2FA.
+Setup flow: Prompt to enter a phone number and verify through a 6-digit code.
+Login History:
+Display recent login attempts (date, time, and device details).
+Security Alerts:
+Toggle to receive notifications about unusual login attempts or password changes.
+User Flow:
+
+User navigates to Account Security from Settings.
+Updates password and enables 2FA if desired.
+Saves changes and receives a confirmation: "Security settings updated successfully."
+📌 5. Data Management Page (Optional Advanced Feature)
+Purpose:
+Give users full control over their stored data within the app ecosystem.
+
+Design Requirements:
+
+Background: Consistent with other settings pages.
+Title:
+"Data Management" – Displayed boldly in white text.
+Sections:
+Data Export:
+Button: "Export My Data" – Downloads a backup of user data.
+Clear Cache:
+Button: "Clear App Cache" – Frees up space and resets temporary storage.
+Manage Downloads:
+Display list of downloaded content with delete options.
+User Flow:
+
+User initiates data export or clears cache.
+App displays a loading indicator while processing.
+Confirmation message appears: "Data cleared successfully." or "Download complete."
+🔐 Security and Functionality Requirements for Settings and Preferences
+Input Validation: Ensure all inputs (e.g., email, password) are properly validated.
+Data Encryption: Sensitive information (e.g., security settings) must be encrypted.
+Two-Factor Authentication (2FA): Utilize a secure system for generating and validating 2FA codes.
+Error Handling: Provide clear feedback for errors (e.g., "Invalid password format").
+Accessibility: Ensure proper color contrast, screen-reader compatibility, and touch-friendly elements.
