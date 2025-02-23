@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     marginBottom: 32,
-    alignItems: 'center',
+    alignItems: "center",
   },
   title: {
     fontSize: 32,
@@ -1180,8 +1180,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 120,
-    resizeMode: 'contain',
-    alignSelf: 'center',
+    resizeMode: "contain",
+    alignSelf: "center",
     marginBottom: 24,
   },
 });

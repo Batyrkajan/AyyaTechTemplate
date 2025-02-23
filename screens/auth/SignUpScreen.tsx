@@ -974,13 +974,13 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     marginBottom: 32,
-    alignItems: 'center',
+    alignItems: "center",
   },
   logo: {
     width: 120,
     height: 120,
-    resizeMode: 'contain',
-    alignSelf: 'center',
+    resizeMode: "contain",
+    alignSelf: "center",
     marginBottom: 24,
   },
   title: {
