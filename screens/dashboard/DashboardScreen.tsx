@@ -12,6 +12,7 @@ import {
   Easing,
   Switch,
   Vibration,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../theme";
@@ -21,9 +22,9 @@ import * as Haptics from "expo-haptics";
 import { Audio } from "expo-av";
 import { LineChart } from "react-native-chart-kit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
-import * as DocumentPicker from 'expo-document-picker';
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system";
+import * as DocumentPicker from "expo-document-picker";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -350,8 +351,28 @@ type ExportData = {
   themes: WidgetTheme[];
 };
 
+// Add new types
+type CustomTheme = WidgetTheme & {
+  isCustom: true;
+  lastModified: string;
+};
+
+type BackupData = {
+  version: number;
+  timestamp: string;
+  configs: WidgetConfig[];
+  themes: (WidgetTheme | CustomTheme)[];
+  lastBackup?: string;
+};
+
 // Add layout preview component
-const LayoutPreview = ({ layout, theme }: { layout: WidgetLayout; theme: WidgetTheme }) => {
+const LayoutPreview = ({
+  layout,
+  theme,
+}: {
+  layout: WidgetLayout;
+  theme: WidgetTheme;
+}) => {
   const getLayoutStyle = () => {
     switch (layout) {
       case "compact":
@@ -397,7 +418,7 @@ const LayoutPreview = ({ layout, theme }: { layout: WidgetLayout; theme: WidgetT
           />
         )}
       </View>
-      
+
       {layout !== "compact" && (
         <View style={styles.layoutPreviewContent}>
           <View
@@ -424,6 +445,54 @@ const LayoutPreview = ({ layout, theme }: { layout: WidgetLayout; theme: WidgetT
           )}
         </View>
       )}
+    </View>
+  );
+};
+
+// Add color picker component
+const ColorPicker = ({
+  color,
+  onColorChange,
+  label,
+}: {
+  color: string;
+  onColorChange: (color: string) => void;
+  label: string;
+}) => {
+  const predefinedColors = [
+    "#1976D2",
+    "#4CAF50",
+    "#FF6B6B",
+    "#9C27B0",
+    "#FF9800",
+    "#00BCD4",
+    "#FFFFFF",
+    "#000000",
+  ];
+
+  return (
+    <View style={styles.colorPicker}>
+      <Text style={styles.colorPickerLabel}>{label}</Text>
+      <View style={styles.colorGrid}>
+        {predefinedColors.map((c) => (
+          <TouchableOpacity
+            key={c}
+            style={[
+              styles.colorOption,
+              { backgroundColor: c },
+              color === c && styles.colorOptionSelected,
+            ]}
+            onPress={() => onColorChange(c)}
+          />
+        ))}
+      </View>
+      <TextInput
+        style={styles.colorInput}
+        value={color}
+        onChangeText={onColorChange}
+        placeholder="#RRGGBB"
+        placeholderTextColor={theme.colors.text + "40"}
+      />
     </View>
   );
 };
@@ -466,9 +535,14 @@ export default function DashboardScreen({ navigation }: Props) {
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([]);
 
   // Add long press handling
-  const longPressTimeout = useRef<NodeJS.Timeout>();
+  const longPressTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
+
+  // Add new custom themes
+  const [customThemes, setCustomThemes] = useState<CustomTheme[]>([]);
+  const [isEditingTheme, setIsEditingTheme] = useState(false);
+  const [editingTheme, setEditingTheme] = useState<CustomTheme | null>(null);
 
   // Load sounds
   useEffect(() => {
@@ -589,13 +663,13 @@ export default function DashboardScreen({ navigation }: Props) {
         Animated.timing(pulseAnim, {
           toValue: 1.05,
           duration: 1000,
-          easing: Easing.inOut(Easing.sine),
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 1000,
-          easing: Easing.inOut(Easing.sine),
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ])
@@ -608,13 +682,13 @@ export default function DashboardScreen({ navigation }: Props) {
         Animated.timing(glowAnim, {
           toValue: 1,
           duration: 1500,
-          easing: Easing.inOut(Easing.sine),
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
         Animated.timing(glowAnim, {
           toValue: 0,
           duration: 1500,
-          easing: Easing.inOut(Easing.sine),
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ])
@@ -670,9 +744,9 @@ export default function DashboardScreen({ navigation }: Props) {
   const handleWidgetDrop = (toIndex: number) => {
     if (!draggedWidget) return;
 
-    setWidgetConfigs(current => {
+    setWidgetConfigs((current) => {
       const newConfigs = [...current];
-      const fromIndex = newConfigs.findIndex(w => w.id === draggedWidget);
+      const fromIndex = newConfigs.findIndex((w) => w.id === draggedWidget);
       const [movedWidget] = newConfigs.splice(fromIndex, 1);
       newConfigs.splice(toIndex, 0, movedWidget);
       return newConfigs.map((w, i) => ({ ...w, order: i }));
@@ -683,8 +757,8 @@ export default function DashboardScreen({ navigation }: Props) {
   };
 
   const toggleWidgetVisibility = (widgetId: string) => {
-    setWidgetConfigs(current =>
-      current.map(w =>
+    setWidgetConfigs((current) =>
+      current.map((w) =>
         w.id === widgetId ? { ...w, visible: !w.visible } : w
       )
     );
@@ -692,8 +766,8 @@ export default function DashboardScreen({ navigation }: Props) {
   };
 
   const toggleWidgetExpansion = (widgetId: string) => {
-    setWidgetConfigs(current =>
-      current.map(w =>
+    setWidgetConfigs((current) =>
+      current.map((w) =>
         w.id === widgetId ? { ...w, expanded: !w.expanded } : w
       )
     );
@@ -706,14 +780,16 @@ export default function DashboardScreen({ navigation }: Props) {
         setWidgetConfigs(JSON.parse(savedConfigs));
       } else {
         // Set default configurations
-        const defaultConfigs: WidgetConfig[] = widgetOptions.map((widget, index) => ({
-          id: widget.id,
-          visible: true,
-          order: index,
-          theme: "default",
-          layout: "normal",
-          refreshInterval: 15,
-        }));
+        const defaultConfigs: WidgetConfig[] = widgetOptions.map(
+          (widget, index) => ({
+            id: widget.id,
+            visible: true,
+            order: index,
+            theme: "default",
+            layout: "normal",
+            refreshInterval: 15,
+          })
+        );
         await saveWidgetConfigs(defaultConfigs);
         setWidgetConfigs(defaultConfigs);
       }
@@ -732,8 +808,11 @@ export default function DashboardScreen({ navigation }: Props) {
     }
   };
 
-  const updateWidgetConfig = async (id: string, updates: Partial<WidgetConfig>) => {
-    const newConfigs = widgetConfigs.map(config =>
+  const updateWidgetConfig = async (
+    id: string,
+    updates: Partial<WidgetConfig>
+  ) => {
+    const newConfigs = widgetConfigs.map((config) =>
       config.id === id ? { ...config, ...updates } : config
     );
     setWidgetConfigs(newConfigs);
@@ -1036,7 +1115,11 @@ export default function DashboardScreen({ navigation }: Props) {
       {widgetOptions.map((widget) => (
         <View key={widget.id} style={styles.customizationItem}>
           <View style={styles.customizationInfo}>
-            <Ionicons name={widget.icon} size={24} color={theme.colors.primary} />
+            <Ionicons
+              name={widget.icon}
+              size={24}
+              color={theme.colors.primary}
+            />
             <View style={styles.customizationText}>
               <Text style={styles.customizationItemTitle}>{widget.title}</Text>
               <Text style={styles.customizationDescription}>
@@ -1045,11 +1128,16 @@ export default function DashboardScreen({ navigation }: Props) {
             </View>
           </View>
           <Switch
-            value={widgetConfigs.find(w => w.id === widget.id)?.visible ?? false}
+            value={
+              widgetConfigs.find((w) => w.id === widget.id)?.visible ?? false
+            }
             onValueChange={() => toggleWidgetVisibility(widget.id)}
-            trackColor={{ false: theme.colors.text + "40", true: theme.colors.primary + "40" }}
+            trackColor={{
+              false: theme.colors.text + "40",
+              true: theme.colors.primary + "40",
+            }}
             thumbColor={
-              widgetConfigs.find(w => w.id === widget.id)?.visible
+              widgetConfigs.find((w) => w.id === widget.id)?.visible
                 ? theme.colors.primary
                 : theme.colors.text
             }
@@ -1061,28 +1149,35 @@ export default function DashboardScreen({ navigation }: Props) {
 
   // Add widget customization menu
   const renderWidgetCustomizationMenu = (widget: WidgetCustomization) => {
-    const config = widgetConfigs.find(c => c.id === widget.id);
+    const config = widgetConfigs.find((c) => c.id === widget.id);
     if (!config) return null;
 
     return (
       <View style={styles.customizationSection}>
-        <Text style={styles.customizationSectionTitle}>{widget.title} Settings</Text>
-        
+        <Text style={styles.customizationSectionTitle}>
+          {widget.title} Settings
+        </Text>
+
         {/* Theme Selection */}
         <View style={styles.settingGroup}>
           <Text style={styles.settingLabel}>Theme</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {widgetThemes.map(theme => (
+            {widgetThemes.map((theme) => (
               <TouchableOpacity
                 key={theme.id}
                 style={[
                   styles.themeOption,
                   {
                     backgroundColor: theme.colors.background,
-                    borderColor: config.theme === theme.id ? theme.colors.accent : "transparent",
+                    borderColor:
+                      config.theme === theme.id
+                        ? theme.colors.accent
+                        : "transparent",
                   },
                 ]}
-                onPress={() => updateWidgetConfig(widget.id, { theme: theme.id })}
+                onPress={() =>
+                  updateWidgetConfig(widget.id, { theme: theme.id })
+                }
               >
                 <Text style={[styles.themeText, { color: theme.colors.text }]}>
                   {theme.name}
@@ -1100,8 +1195,10 @@ export default function DashboardScreen({ navigation }: Props) {
             showsHorizontalScrollIndicator={false}
             style={styles.layoutPreviewContainer}
           >
-            {widget.layouts?.map(layout => {
-              const theme = widgetThemes.find(t => t.id === config.theme) || widgetThemes[0];
+            {widget.layouts?.map((layout) => {
+              const theme =
+                widgetThemes.find((t) => t.id === config.theme) ||
+                widgetThemes[0];
               return (
                 <TouchableOpacity
                   key={layout}
@@ -1125,14 +1222,17 @@ export default function DashboardScreen({ navigation }: Props) {
         <View style={styles.settingGroup}>
           <Text style={styles.settingLabel}>Refresh Interval</Text>
           <View style={styles.refreshOptions}>
-            {widget.refreshIntervals?.map(interval => (
+            {widget.refreshIntervals?.map((interval) => (
               <TouchableOpacity
                 key={interval}
                 style={[
                   styles.refreshOption,
-                  config.refreshInterval === interval && styles.refreshOptionSelected,
+                  config.refreshInterval === interval &&
+                    styles.refreshOptionSelected,
                 ]}
-                onPress={() => updateWidgetConfig(widget.id, { refreshInterval: interval })}
+                onPress={() =>
+                  updateWidgetConfig(widget.id, { refreshInterval: interval })
+                }
               >
                 <Text style={styles.refreshOptionText}>{interval} min</Text>
               </TouchableOpacity>
@@ -1145,10 +1245,11 @@ export default function DashboardScreen({ navigation }: Props) {
 
   // Update widget rendering to use configurations
   const renderWidget = (widget: WidgetCustomization) => {
-    const config = widgetConfigs.find(c => c.id === widget.id);
+    const config = widgetConfigs.find((c) => c.id === widget.id);
     if (!config || !config.visible) return null;
 
-    const theme = widgetThemes.find(t => t.id === config.theme) || widgetThemes[0];
+    const theme =
+      widgetThemes.find((t) => t.id === config.theme) || widgetThemes[0];
 
     return (
       <Animated.View
@@ -1190,33 +1291,212 @@ export default function DashboardScreen({ navigation }: Props) {
     }
   };
 
-  const importWidgetData = async () => {
+  const handleImportConfig = async () => {
     try {
-      // Implementation will depend on your file picking solution
       const result = await DocumentPicker.getDocumentAsync({
         type: "application/json",
       });
 
-      if (result.type === "success") {
-        const content = await FileSystem.readAsStringAsync(result.uri);
+      if (result.assets && result.assets.length > 0) {
+        const content = await FileSystem.readAsStringAsync(
+          result.assets[0].uri
+        );
         const importData: ExportData = JSON.parse(content);
-
-        // Validate version and data structure
-        if (importData.version !== 1) {
-          throw new Error("Unsupported configuration version");
-        }
-
-        // Apply imported configurations
-        setWidgetConfigs(importData.configs);
-        await saveWidgetConfigs(importData.configs);
-
-        Alert.alert("Success", "Widget configuration imported successfully");
+        // ... rest of import logic
       }
     } catch (error) {
-      console.error("Error importing widget data:", error);
-      Alert.alert("Import Error", "Failed to import widget configuration");
+      console.error("Import error:", error);
+      Alert.alert("Error", "Failed to import configuration");
     }
   };
+
+  // Load custom themes
+  useEffect(() => {
+    loadCustomThemes();
+  }, []);
+
+  const loadCustomThemes = async () => {
+    try {
+      const saved = await AsyncStorage.getItem("@custom_themes");
+      if (saved) {
+        setCustomThemes(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error("Error loading custom themes:", error);
+    }
+  };
+
+  const saveCustomThemes = async (themes: CustomTheme[]) => {
+    try {
+      await AsyncStorage.setItem("@custom_themes", JSON.stringify(themes));
+      setCustomThemes(themes);
+    } catch (error) {
+      console.error("Error saving custom themes:", error);
+    }
+  };
+
+  const createCustomTheme = () => {
+    const newTheme: CustomTheme = {
+      id: `custom_${Date.now()}`,
+      name: "Custom Theme",
+      isCustom: true,
+      lastModified: new Date().toISOString(),
+      colors: {
+        background: theme.colors.secondary,
+        text: theme.colors.text,
+        accent: theme.colors.primary,
+      },
+    };
+    setEditingTheme(newTheme);
+    setIsEditingTheme(true);
+  };
+
+  const saveCustomTheme = async () => {
+    if (!editingTheme) return;
+
+    const updated = editingTheme.id.startsWith("custom_")
+      ? [...customThemes.filter((t) => t.id !== editingTheme.id), editingTheme]
+      : [...customThemes, editingTheme];
+
+    await saveCustomThemes(updated);
+    setIsEditingTheme(false);
+    setEditingTheme(null);
+  };
+
+  // Add backup/restore functions
+  const createBackup = async () => {
+    try {
+      const backupData: BackupData = {
+        version: 1,
+        timestamp: new Date().toISOString(),
+        configs: widgetConfigs,
+        themes: [...widgetThemes, ...customThemes],
+        lastBackup: new Date().toISOString(),
+      };
+
+      const backupFileName = `dashboard_backup_${Date.now()}.json`;
+      const backupUri = `${FileSystem.documentDirectory}${backupFileName}`;
+
+      await FileSystem.writeAsStringAsync(
+        backupUri,
+        JSON.stringify(backupData, null, 2)
+      );
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(backupUri, {
+          mimeType: "application/json",
+          dialogTitle: "Save Dashboard Backup",
+        });
+      }
+
+      Alert.alert("Success", "Backup created successfully");
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      Alert.alert("Error", "Failed to create backup");
+    }
+  };
+
+  const restoreBackup = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/json",
+      });
+
+      if (!result.canceled) {
+        const content = await FileSystem.readAsStringAsync(
+          result.assets[0].uri
+        );
+        const backupData: BackupData = JSON.parse(content);
+
+        if (backupData.version !== 1) {
+          throw new Error("Unsupported backup version");
+        }
+
+        // Restore configurations
+        await saveWidgetConfigs(backupData.configs);
+        setWidgetConfigs(backupData.configs);
+
+        // Restore custom themes
+        const customThemesFromBackup = backupData.themes.filter(
+          (t): t is CustomTheme => "isCustom" in t && t.isCustom
+        );
+        await saveCustomThemes(customThemesFromBackup);
+
+        Alert.alert("Success", "Dashboard restored successfully");
+      }
+    } catch (error) {
+      console.error("Error restoring backup:", error);
+      Alert.alert("Error", "Failed to restore backup");
+    }
+  };
+
+  // Add theme editor modal
+  const renderThemeEditor = () => (
+    <View style={styles.themeEditor}>
+      <View style={styles.themeEditorHeader}>
+        <Text style={styles.themeEditorTitle}>Edit Theme</Text>
+        <TextInput
+          style={styles.themeNameInput}
+          value={editingTheme?.name}
+          onChangeText={(text) =>
+            setEditingTheme((prev) => (prev ? { ...prev, name: text } : null))
+          }
+          placeholder="Theme Name"
+          placeholderTextColor={theme.colors.text + "40"}
+        />
+      </View>
+
+      <ColorPicker
+        label="Background Color"
+        color={editingTheme?.colors.background || ""}
+        onColorChange={(color) =>
+          setEditingTheme((prev) =>
+            prev
+              ? { ...prev, colors: { ...prev.colors, background: color } }
+              : null
+          )
+        }
+      />
+
+      <ColorPicker
+        label="Text Color"
+        color={editingTheme?.colors.text || ""}
+        onColorChange={(color) =>
+          setEditingTheme((prev) =>
+            prev ? { ...prev, colors: { ...prev.colors, text: color } } : null
+          )
+        }
+      />
+
+      <ColorPicker
+        label="Accent Color"
+        color={editingTheme?.colors.accent || ""}
+        onColorChange={(color) =>
+          setEditingTheme((prev) =>
+            prev ? { ...prev, colors: { ...prev.colors, accent: color } } : null
+          )
+        }
+      />
+
+      <View style={styles.themeEditorActions}>
+        <TouchableOpacity
+          style={[styles.themeEditorButton, styles.themeEditorCancelButton]}
+          onPress={() => {
+            setIsEditingTheme(false);
+            setEditingTheme(null);
+          }}
+        >
+          <Text style={styles.themeEditorButtonText}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.themeEditorButton, styles.themeEditorSaveButton]}
+          onPress={saveCustomTheme}
+        >
+          <Text style={styles.themeEditorButtonText}>Save Theme</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
     <ScrollView style={styles.container}>
@@ -1326,9 +1606,9 @@ export default function DashboardScreen({ navigation }: Props) {
       {isCustomizing && renderCustomizationMenu()}
 
       {widgetConfigs
-        .filter(w => w.visible)
+        .filter((w) => w.visible)
         .sort((a, b) => a.order - b.order)
-        .map(widget => {
+        .map((widget) => {
           switch (widget.id) {
             case "usage":
               return (
@@ -1896,5 +2176,83 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginTop: 8,
     textAlign: "center",
+  },
+  themeEditor: {
+    backgroundColor: theme.colors.background,
+    padding: 20,
+    borderRadius: 16,
+    maxHeight: "80%",
+  },
+  themeEditorHeader: {
+    marginBottom: 20,
+  },
+  themeEditorTitle: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: theme.colors.text,
+    marginBottom: 12,
+  },
+  themeNameInput: {
+    fontSize: 16,
+    color: theme.colors.text,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.text + "20",
+    paddingVertical: 8,
+  },
+  colorPicker: {
+    marginBottom: 20,
+  },
+  colorPickerLabel: {
+    fontSize: 14,
+    color: theme.colors.text + "80",
+    marginBottom: 8,
+  },
+  colorGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  colorOptionSelected: {
+    borderColor: theme.colors.primary,
+  },
+  colorInput: {
+    fontSize: 16,
+    color: theme.colors.text,
+    borderWidth: 1,
+    borderColor: theme.colors.text + "20",
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 8,
+  },
+  themeEditorActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  themeEditorButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 8,
+  },
+  themeEditorCancelButton: {
+    backgroundColor: theme.colors.text + "20",
+  },
+  themeEditorSaveButton: {
+    backgroundColor: theme.colors.primary,
+  },
+  themeEditorButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: theme.colors.background,
   },
 });
