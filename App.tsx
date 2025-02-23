@@ -57,6 +57,7 @@ const screenOptions: NativeStackNavigationOptions = {
   contentStyle: {
     backgroundColor: theme.colors.background,
   },
+  animation: "fade",
 };
 
 type Screen = {
@@ -71,7 +72,7 @@ const screens: Screen[] = [
     component: SplashScreen,
     options: {
       gestureEnabled: false,
-      animationTypeForReplace: "pop",
+      animation: "none",
     },
   },
   {
@@ -110,10 +111,7 @@ const screens: Screen[] = [
 
 function RootStack() {
   return (
-    <Stack.Navigator
-      initialRouteName="Splash"
-      screenOptions={screenOptions}
-    >
+    <Stack.Navigator initialRouteName="Splash" screenOptions={screenOptions}>
       {screens.map((screen) => (
         <Stack.Screen
           key={screen.name}
