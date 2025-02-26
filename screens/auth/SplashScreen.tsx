@@ -15,13 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 // Add pattern variations
-const patterns = [
-  'triangle',
-  'square',
-  'diamond',
-  'ellipse',
-  'star',
-] as const;
+const patterns = ["triangle", "square", "diamond", "ellipse", "star"] as const;
 
 export default function SplashScreen({ navigation }: ScreenProps<"Splash">) {
   // Add more animation values
@@ -156,17 +150,17 @@ export default function SplashScreen({ navigation }: ScreenProps<"Splash">) {
 
   const spin = rotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+    outputRange: ["0deg", "360deg"],
   });
 
   const patternRotation = patternRotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['45deg', '405deg'],
+    outputRange: ["45deg", "405deg"],
   });
 
   const loadingRotation = loadingRotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+    outputRange: ["0deg", "360deg"],
   });
 
   const backgroundColor = colorAnim.interpolate({
@@ -181,13 +175,13 @@ export default function SplashScreen({ navigation }: ScreenProps<"Splash">) {
   return (
     <View style={styles.container}>
       {/* Enhanced Background Pattern */}
-      <Animated.View 
+      <Animated.View
         style={[
-          styles.patternContainer, 
-          { 
+          styles.patternContainer,
+          {
             opacity: patternAnim,
             transform: [{ rotate: patternRotation }],
-          }
+          },
         ]}
       >
         {Array.from({ length: 5 }).map((_, rowIndex) => (
@@ -197,10 +191,7 @@ export default function SplashScreen({ navigation }: ScreenProps<"Splash">) {
               return (
                 <Animated.View
                   key={`pattern-${rowIndex}-${colIndex}`}
-                  style={[
-                    styles.patternIcon,
-                    { backgroundColor },
-                  ]}
+                  style={[styles.patternIcon, { backgroundColor }]}
                 >
                   <Ionicons
                     name={patterns[patternIndex]}
@@ -235,20 +226,20 @@ export default function SplashScreen({ navigation }: ScreenProps<"Splash">) {
       </Animated.View>
 
       {/* Enhanced Loading Indicator */}
-      <Animated.View 
+      <Animated.View
         style={[
-          styles.loadingContainer, 
-          { 
+          styles.loadingContainer,
+          {
             opacity: loadingAnim,
             transform: [
               { rotate: loadingRotation },
               { scale: loadingScaleAnim },
             ],
-          }
+          },
         ]}
       >
-        <LoadingIndicator 
-          size={40} 
+        <LoadingIndicator
+          size={40}
           color={colorAnim.interpolate({
             inputRange: [0, 0.5, 1],
             outputRange: [
@@ -256,7 +247,7 @@ export default function SplashScreen({ navigation }: ScreenProps<"Splash">) {
               theme.colors.accent,
               theme.colors.primary,
             ],
-          })} 
+          })}
         />
       </Animated.View>
     </View>
@@ -284,7 +275,7 @@ const styles = StyleSheet.create({
     margin: 10,
     padding: 10,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   logoContainer: {
     padding: 20,
@@ -303,4 +294,4 @@ const styles = StyleSheet.create({
     borderRadius: SCREEN_WIDTH * 0.1,
     backgroundColor: theme.colors.secondary + "20",
   },
-}); 
+});

@@ -37,7 +37,7 @@ type DashboardOption = {
   color?: string;
 };
 
-const getDashboardOptions = (nav: Props["navigation"]): DashboardOption[] => [
+const getDashboardOptions = (navigation: Props["navigation"]) => [
   {
     icon: "person-circle",
     label: "Profile",
@@ -73,27 +73,27 @@ const getDashboardOptions = (nav: Props["navigation"]): DashboardOption[] => [
     },
   },
   {
-    icon: "log-out",
+    icon: "log-out-outline",
     label: "Logout",
-    onPress: (nav) => {
-      Alert.alert(
-        "Logout",
-        "Are you sure you want to logout?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-          {
-            text: "Logout",
-            style: "destructive",
-            onPress: () => nav.replace("Welcome"),
-          },
-        ],
-        { cancelable: true }
-      );
-    },
     color: theme.colors.accent,
+    onPress: (nav) => {
+      Alert.alert("Logout", "Are you sure you want to logout?", [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: () => {
+            nav.reset({
+              index: 0,
+              routes: [{ name: "Welcome" }],
+            });
+          },
+        },
+      ]);
+    },
   },
 ];
 
@@ -223,7 +223,7 @@ type WidgetTheme = {
   };
 };
 
-type WidgetLayout = 'compact' | 'normal' | 'expanded';
+type WidgetLayout = "compact" | "normal" | "expanded";
 
 type WidgetCustomization = {
   id: string;

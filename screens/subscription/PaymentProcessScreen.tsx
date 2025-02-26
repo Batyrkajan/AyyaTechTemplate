@@ -74,7 +74,10 @@ const validateCardNumber = (number: string): ValidationResult => {
     return { field: "number", message: "Card number is required" };
   }
   if (!/^\d{16}$/.test(cleaned)) {
-    return { field: "number", message: "Please enter a valid 16-digit card number" };
+    return {
+      field: "number",
+      message: "Please enter a valid 16-digit card number",
+    };
   }
   return null;
 };
@@ -84,7 +87,10 @@ const validateExpiry = (expiry: string): ValidationResult => {
     return { field: "expiry", message: "Expiry date is required" };
   }
   if (!expiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) {
-    return { field: "expiry", message: "Please enter a valid expiry date (MM/YY)" };
+    return {
+      field: "expiry",
+      message: "Please enter a valid expiry date (MM/YY)",
+    };
   }
   const [month, year] = expiry.split("/");
   const expiryDate = new Date(2000 + parseInt(year), parseInt(month) - 1);

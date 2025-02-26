@@ -15,6 +15,7 @@ import {
   Vibration,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../theme";
@@ -22,6 +23,7 @@ import type { ScreenProps } from "../../App";
 import * as Haptics from "expo-haptics";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "../../contexts/AuthContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -106,11 +108,15 @@ const socialProviders: {
   },
 ];
 
+// Add validation rules at the top after imports
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_MIN_LENGTH = 6;
+
 export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -159,6 +165,14 @@ export default function LoginScreen({ navigation }: Props) {
     email: useRef(new Animated.Value(0)).current,
     password: useRef(new Animated.Value(0)).current,
   };
+
+  const { signIn } = useAuth();
+
+  // Add error state
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+  });
 
   useEffect(() => {
     // Check biometric support
@@ -357,31 +371,63 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
+  const validateInputs = () => {
+    const newErrors = {
+      email: "",
+      password: "",
+    };
+
+    // Email validation
+    if (!email) {
+      newErrors.email = "Email is required";
+    } else if (!EMAIL_REGEX.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < PASSWORD_MIN_LENGTH) {
+      newErrors.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
+    }
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((error) => error !== "");
+  };
+
   const handleLogin = async () => {
-    if (!validateForm()) {
-      shakeForm();
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    if (!validateInputs()) {
       return;
     }
 
-    setIsLoading(true);
-    startLoadingAnimation();
-
+    setLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const { error } = await signIn(email, password);
 
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showSuccessAnimation();
+      if (error) {
+        // Handle specific Supabase errors
+        if (error.message.includes("Invalid login credentials")) {
+          Alert.alert("Login Failed", "Invalid email or password");
+        } else if (error.message.includes("Email not confirmed")) {
+          Alert.alert(
+            "Email Not Verified",
+            "Please check your email and verify your account before logging in."
+          );
+        } else {
+          throw error;
+        }
+        return;
+      }
 
-      setTimeout(() => {
-        navigation.replace("Dashboard");
-      }, 1000);
+      // On successful login, navigation will be handled by the auth state change in AuthContext
     } catch (error) {
-      setIsLoading(false);
-      shakeForm();
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Error", "Failed to login. Please try again.");
+      console.error("Login error:", error);
+      Alert.alert(
+        "Login Failed",
+        "There was a problem signing in. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -492,7 +538,7 @@ export default function LoginScreen({ navigation }: Props) {
   // Add social login handler
   const handleSocialLogin = async (provider: SocialProvider) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       // TODO: Implement actual social auth
@@ -507,7 +553,7 @@ export default function LoginScreen({ navigation }: Props) {
         `Failed to login with ${provider}. Please try again.`
       );
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -736,245 +782,120 @@ export default function LoginScreen({ navigation }: Props) {
     await handleSocialLogin(provider);
   };
 
+  const renderError = (error: string) => {
+    if (!error) return null;
+    return <Text style={styles.errorText}>{error}</Text>;
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
       >
-        {/* Add Back Button */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-
-        <Animated.View
-          style={[
-            styles.header,
-            {
-              opacity: animationValues.fadeAnim,
-              transform: [{ translateY: animationValues.slideAnim }],
-            },
-          ]}
-        >
-          <Image
-            source={require("../../assets/images/logo.png")}
-            style={styles.logo}
-          />
+        <View style={styles.header}>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
-        </Animated.View>
+        </View>
 
-        <Animated.View
-          style={[
-            styles.form,
-            {
-              opacity: animationValues.formOpacity,
-              transform: [
-                { translateY: animationValues.formSlide },
-                { translateX: shakeAnim },
-              ],
-            },
-          ]}
-        >
-          <Animated.View
-            style={[
-              styles.inputContainer,
-              {
-                transform: [
-                  {
-                    scale: emailFocus.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.02],
-                    }),
-                  },
-                ],
-              },
-            ]}
+        <View style={styles.form}>
+          <View
+            style={[styles.inputContainer, errors.email && styles.inputError]}
           >
             <Ionicons
               name="mail-outline"
               size={20}
-              color={theme.colors.text + "80"}
+              color={theme.colors.text}
+              style={styles.inputIcon}
             />
             <TextInput
               style={styles.input}
               placeholder="Email"
-              placeholderTextColor={theme.colors.text + "60"}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
+              placeholderTextColor={theme.colors.text + "80"}
               keyboardType="email-address"
-              onFocus={() => handleFocus("email")}
-              onBlur={() => handleBlur("email")}
+              autoCapitalize="none"
+              autoComplete="off"
+              textContentType="none"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                setErrors((prev) => ({ ...prev, email: "" }));
+              }}
             />
-          </Animated.View>
+          </View>
+          {renderError(errors.email)}
 
-          <Animated.View
+          <View
             style={[
               styles.inputContainer,
-              {
-                transform: [
-                  {
-                    scale: passwordFocus.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.02],
-                    }),
-                  },
-                ],
-              },
+              errors.password && styles.inputError,
             ]}
           >
             <Ionicons
               name="lock-closed-outline"
               size={20}
-              color={theme.colors.text + "80"}
+              color={theme.colors.text}
+              style={styles.inputIcon}
             />
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor={theme.colors.text + "60"}
-              value={password}
-              onChangeText={handlePasswordChange}
+              placeholderTextColor={theme.colors.text + "80"}
               secureTextEntry={!showPassword}
-              onFocus={() => {
-                handleFocus("password");
-                setShowPasswordRequirements(true);
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                setErrors((prev) => ({ ...prev, password: "" }));
               }}
-              onBlur={() => handleBlur("password")}
+              autoComplete="off"
+              textContentType="none"
+              passwordRules="none"
+              spellCheck={false}
+              autoCorrect={false}
             />
             <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
               style={styles.showPasswordButton}
+              onPress={() => setShowPassword(!showPassword)}
             >
               <Ionicons
                 name={showPassword ? "eye-off-outline" : "eye-outline"}
                 size={20}
-                color={theme.colors.text + "80"}
+                color={theme.colors.text}
               />
             </TouchableOpacity>
-          </Animated.View>
-
-          {/* Add validation error messages */}
-          {Object.entries(validationErrors).map(([field, message]) => (
-            <Animated.Text
-              key={field}
-              style={[
-                styles.errorText,
-                {
-                  opacity: errorAnims[field as keyof typeof errorAnims],
-                  transform: [
-                    {
-                      translateX: errorAnims[
-                        field as keyof typeof errorAnims
-                      ].interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [-20, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              {message}
-            </Animated.Text>
-          ))}
+          </View>
+          {renderError(errors.password)}
 
           <TouchableOpacity
-            style={styles.forgotPassword}
+            style={styles.forgotPasswordButton}
             onPress={() => navigation.navigate("ForgotPassword")}
           >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.loginButton}
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
             onPress={handleLogin}
-            disabled={isLoading}
-            activeOpacity={0.8}
+            disabled={loading}
           >
-            <Animated.View
-              style={[
-                styles.buttonContent,
-                {
-                  transform: [{ scale: buttonScale }],
-                },
-              ]}
-            >
-              {isLoading ? (
-                <Animated.View
-                  style={{
-                    transform: [
-                      {
-                        rotate: loadingRotation.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ["0deg", "360deg"],
-                        }),
-                      },
-                    ],
-                  }}
-                >
-                  <Ionicons
-                    name="reload-outline"
-                    size={24}
-                    color={theme.colors.background}
-                  />
-                </Animated.View>
-              ) : (
-                <Text style={styles.loginButtonText}>Sign In</Text>
-              )}
-            </Animated.View>
-          </TouchableOpacity>
-
-          {renderPasswordStrength()}
-        </Animated.View>
-
-        {/* Social Login Section - Moved after form */}
-        {renderSocialButtons()}
-
-        {/* Sign Up Link */}
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
-            <Text style={styles.signupLink}>Sign Up</Text>
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.loginButtonText}>Sign In</Text>
+            )}
           </TouchableOpacity>
         </View>
 
-        {/* Biometric Button */}
-        {renderBiometricButton()}
-
-        {/* Success Animation Overlay */}
-        {isLoading && (
-          <Animated.View
-            style={[
-              styles.successOverlay,
-              {
-                opacity: successScale,
-              },
-            ]}
-          >
-            <Animated.View
-              style={[
-                styles.successIcon,
-                {
-                  transform: [{ scale: successScale }],
-                },
-              ]}
-            >
-              <Ionicons
-                name="checkmark-circle"
-                size={80}
-                color={theme.colors.primary}
-              />
-            </Animated.View>
-          </Animated.View>
-        )}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don't have an account?</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+            <Text style={styles.signUpButton}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -984,12 +905,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    justifyContent: "center",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+    paddingTop: Platform.OS === "ios" ? 60 : 40,
   },
   header: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
-    alignItems: "center",
+    marginBottom: 40,
   },
   title: {
     fontSize: 32,
@@ -1002,28 +925,31 @@ const styles = StyleSheet.create({
     color: theme.colors.text + "80",
   },
   form: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
+    marginBottom: 20,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: theme.colors.secondary,
     borderRadius: 12,
+    marginBottom: 8,
     paddingHorizontal: 16,
-    marginBottom: 16,
-    height: 56,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
+    height: 50,
     color: theme.colors.text,
+    fontSize: 16,
   },
   showPasswordButton: {
     padding: 8,
   },
-  forgotPassword: {
+  forgotPasswordButton: {
     alignSelf: "flex-end",
     marginBottom: 24,
   },
@@ -1034,46 +960,32 @@ const styles = StyleSheet.create({
   loginButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: 12,
-    height: 56,
+    height: 50,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
   },
-  buttonContent: {
-    flexDirection: "row",
-    alignItems: "center",
+  loginButtonDisabled: {
+    opacity: 0.7,
   },
   loginButtonText: {
-    color: theme.colors.background,
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },
-  signupContainer: {
+  footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 16,
-    marginBottom: 24,
+    marginTop: "auto",
+    paddingVertical: 20,
   },
-  signupText: {
+  footerText: {
     color: theme.colors.text + "80",
-    fontSize: 14,
+    marginRight: 4,
   },
-  signupLink: {
+  signUpButton: {
     color: theme.colors.primary,
-    fontSize: 14,
     fontWeight: "600",
-  },
-  successOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.colors.background + "F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  successIcon: {
-    backgroundColor: theme.colors.background,
-    borderRadius: 40,
-    padding: 8,
   },
   socialSection: {
     paddingHorizontal: 24,
@@ -1097,9 +1009,11 @@ const styles = StyleSheet.create({
   errorText: {
     color: theme.colors.accent,
     fontSize: 12,
-    marginTop: -12,
-    marginBottom: 12,
+    marginBottom: 8,
     marginLeft: 16,
+  },
+  inputError: {
+    borderColor: theme.colors.accent,
   },
   biometricButton: {
     marginHorizontal: 24,
@@ -1162,26 +1076,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     marginLeft: 12,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
-    paddingBottom: 20,
-  },
-  backButton: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? 50 : 30,
-    left: 20,
-    zIndex: 10,
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: theme.colors.secondary + "40",
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    resizeMode: "contain",
-    alignSelf: "center",
-    marginBottom: 24,
   },
 });

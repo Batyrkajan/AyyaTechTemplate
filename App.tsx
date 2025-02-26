@@ -33,10 +33,12 @@ import WelcomeScreen from "./screens/auth/WelcomeScreen";
 import UsageStatsScreen from "./screens/dashboard/UsageStatsScreen";
 import ActivityHistoryScreen from "./screens/dashboard/ActivityHistoryScreen";
 import PaymentMethodsScreen from "./screens/dashboard/PaymentMethodsScreen";
+import TestScreen from "./screens/TestScreen";
 import { theme } from "./theme";
 import type { PropsWithChildren, ComponentType, ReactNode } from "react";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -70,6 +72,7 @@ export type RootStackParamList = {
   UsageStats: undefined;
   ActivityHistory: undefined;
   PaymentMethods: undefined;
+  Test: undefined;
 };
 
 export type ScreenProps<T extends keyof RootStackParamList> =
@@ -197,6 +200,10 @@ const screens: Screen[] = [
     name: "PaymentMethods",
     component: PaymentMethodsScreen,
   },
+  {
+    name: "Test",
+    component: TestScreen,
+  },
 ];
 
 function RootStack() {
@@ -238,11 +245,13 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <SettingsProvider>
-        <SubscriptionProvider>
-          <Navigation />
-        </SubscriptionProvider>
-      </SettingsProvider>
+      <AuthProvider>
+        <SettingsProvider>
+          <SubscriptionProvider>
+            <Navigation />
+          </SubscriptionProvider>
+        </SettingsProvider>
+      </AuthProvider>
     </View>
   );
 }
